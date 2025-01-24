@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오목 게임</title>
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+
+        /* 판 스타일 */
+        #board {
+            display: grid;
+            grid-template-columns: repeat(15, 40px); /* 15개의 열로 나누기 */
+            grid-template-rows: repeat(15, 40px); /* 15개의 행으로 나누기 */
+            gap: 2px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+
+        /* 각 칸의 스타일 */
+        .square {
+            width: 40px;
+            height: 40px;
+            background-color: #e0e0e0; /* 판의 배경색을 연한 회색으로 설정 */
+            border: 1px solid #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 2em; /* 이모지 크기 조정 */
+        }
+
+        /* 돌이 놓인 칸 스타일 */
+        .taken {
+            background-color: #ccc; /* 돌이 놓인 칸의 배경색을 연한 회색으로 설정 */
+        }
+
+        /* 버튼 스타일 */
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>오목 게임</h1>
+    <div id="board"></div>
+    <div>
+        <button id="resetButton">게임 초기화</button>
+    </div>
+
+    <script>
+        const boardSize = 15;
+        const board = [];
+        let currentPlayer = 'black';  // 첫 번째 턴은 '흑돌'
+        let gameOver = false;
+
+        const boardElement = document.getElementById('board');
+        const resetButton = document.getElementById('resetButton');
+
+        // 보드 초기화
+        function initializeBoard() {
+            boardElement.innerHTML = ''; // 기존 보드 내용 초기화
+            board.length = 0;
+
+            for (let row = 0; row < boardSize; row++) {
+                board[row] = [];
+                for (let col = 0; col < boardSize; col++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    square.addEventListener('click', () => handleClick(row, col, square));
+
+                    boardElement.appendChild(square);
+                    board[row][col] = null; // 초기에는 모든 칸에 돌이 없음
+                }
+            }
+        }
+
+        // 클릭 시 돌을 놓고 턴 변경
+        function handleClick(row, col, square) {
+            if (gameOver || board[row][col] !== null) return;  // 이미 돌이 있으면 무시
+
+            board[row][col] = currentPlayer;
+            square.textContent = currentPlayer === 'black' ? '⚫' : '⚪';  // 흑돌은 ⚫, 백돌은 ⚪
+            square.classList.add('taken');
+
+            if (checkWinner(row, col)) {
+                alert(currentPlayer === 'black' ? '흑돌 승리!' : '백돌 승리!');
+                gameOver = true;
+            } else {
+                currentPlayer = currentPlayer === 'black' ? 'white' : 'black';  // 턴 변경
+            }
+        }
+
+        // 승리 여부 체크
+        function checkWinner(row, col) {
+            const directions = [
+                { dr: 0, dc: 1 },  // 가로
+                { dr: 1, dc: 0 },  // 세로
+                { dr: 1, dc: 1 },  // 대각선 1
+                { dr: 1, dc: -1 }  // 대각선 2
+            ];
+
+            for (const { dr, dc } of directions) {
+                let count = 1;
+
+                // 한 방향으로 돌기
+                count += countStones(row, col, dr, dc);
+
+                // 반대 방향으로 돌기
+                count += countStones(row, col, -dr, -dc);
+
+                if (count >= 5) return true;
+            }
+
+            return false;
+        }
+
+        // 한 방향으로 같은 돌이 몇 개 있는지 세는 함수
+        function countStones(row, col, dr, dc) {
+            let count = 0;
+            let r = row + dr;
+            let c = col + dc;
+
+            while (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] === currentPlayer) {
+                count++;
+                r += dr;
+                c += dc;
+            }
+
+            return count;
+        }
+
+        // 게임 초기화 버튼
+        resetButton.addEventListener('click', () => {
+            gameOver = false;
+            currentPlayer = 'black'; // 다시 흑돌부터 시작
+            initializeBoard();
+        });
+
+        // 보드 초기화
+        initializeBoard();
+    </script>
+</body>
+</html>
